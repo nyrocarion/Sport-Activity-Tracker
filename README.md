@@ -5,4 +5,4 @@ Tutorial is given when starting the programm.
 
 # Example Result
 
-[ExampleResult](Example.png)
+[ExampleResult](https://github.com/nyrocarion/Sport-Activity-Tracker/blob/main/Example.png)
