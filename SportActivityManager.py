@@ -40,10 +40,10 @@ class SportActivityManager(object):
                 } 
         }
         self.num_to_display_mapping = {
-            "1" : "RE",
-            "2" : "WO",
-            "3" : "RU",
-            "4" : "HI"
+            "1" : "\U0001F4A4",
+            "2" : "\U0001F4AA",
+            "3" : "\U0001F3C3",
+            "4" : "\U0001F97E"
         }
         
 
@@ -88,6 +88,10 @@ class SportActivityManager(object):
             json.dump(self.activity_data,file,indent=4)
 
     def create_heatmap(self,start_date,end_date):
+        if start_date == "":
+            start_date = list(self.activity_data.items())[0][0]
+        if end_date == "":
+            end_date = list(self.activity_data.items())[-1][0]
         date_range = pandas.date_range(start=start_date,end=end_date)
 
         calendar_weeks = list()
@@ -101,23 +105,25 @@ class SportActivityManager(object):
             calendar_week = datetime_object.isocalendar().week
             if calendar_week not in calendar_weeks:
                 calendar_weeks.append(calendar_week)
-
-            val = self.text_to_value_mapping[self.activity_data[date]["activity_type"]]["numeric_value"] 
-
+            try: 
+                val = self.text_to_value_mapping[self.activity_data[date]["activity_type"]]["numeric_value"] 
+            except:
+                val = 0
             weekday = datetime_object.isocalendar().weekday # 7 is sunday!
             row_data[weekday-1] = val
             if weekday == 7 or date == end_date:
                 data.append(row_data)
                 row_data = [0,0,0,0,0,0,0]
-
-        print(data)
+            
 
         test = np.array(data)
-    
-        cmap = ListedColormap(["white", "gold", "lawngreen", "lightseagreen", "magenta"])
+
+        colors = ["#F9DBBD", "#FF858D", "#DA627D", "#A53860", "#450920"]
+        cmap = ListedColormap(colors)
 
         fig, ax = plt.subplots()
         im = ax.imshow(test,cmap)
+        fig.patch.set_facecolor("#F1BB7E")
 
         # Set calendar week and weekday ticks
         ax.set_xticks(range(len(weekdays)), labels=weekdays)
@@ -131,9 +137,23 @@ class SportActivityManager(object):
                     text = self.num_to_display_mapping[str(test[i,j])]
                 except:
                     text = ""
-                text = ax.text(j, i, text, ha="center", va="center", color="w")
+                text = ax.text(j, i, text, ha="center", va="center", color="w", fontfamily="Segoe UI Emoji", fontsize=20)
 
         ax.set_title(f"Sport Activity Data from {start_date} to {end_date}")
+
+        legend_labels = {
+            0: "No data",
+            1: "Restday",
+            2: "Workout",
+            3: "Running",
+            4: "Hiking"
+        }
+
+        patches = [matplotlib.patches.Patch(color=colors[i], label=legend_labels[i]) for i in range(len(colors))]
+
+        # Legende hinzufügen
+        ax.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc='upper left', title="Activity Type")
+
         plt.show()
 
         
