@@ -49,9 +49,10 @@ class SportActivityManager(object):
         type = input("Enter type (workout w, running r, hiking h or restday ENTER): ")
         if len(type) == 1:
             type = {"w" : "workout", "r": "running", "h": "hiking"}[type]
+            details = input("Enter additional details (distance, workout name, etc.)")
         else:
             type = "restday"
-        details = input("Enter additional details (distance, workout name, etc.)")
+            details = ""
         entry = {
             date: {
                 "activity_type" : type,
@@ -99,8 +100,8 @@ class SportActivityManager(object):
         structured_data = np.array(data)
 
         # Basic plot config
-        colors = ["#F9DBBD", "#FF858D", "#DA627D", "#A53860", "#450920"]
         background_color = "#F1BB7E"
+        colors = ["#F9DBBD", background_color, "#FF858D", "#DA627D", "#A53860"]
         color_map = ListedColormap(colors)
         fig, ax = plt.subplots()
         plt.rc('font', family='Consolas', size=12)
