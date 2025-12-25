@@ -136,12 +136,17 @@ class SportActivityManager(object):
 
         plt.show()
 
+# Idea: A mode which allows a user to add all entries since the last entry
+# Idea: A mode that creates the activity map for the last full month
+
 if __name__ == "__main__":
     s = SportActivityManager()
-    user_input = ""
-    while user_input == "":
-        user_input = input("Generate activiy map (M), enter new entry (D) or enter mode to add multiple entries (X)? ")
+    while True:
+        user_input = input("Generate activiy map (M)\n" \
+        "Enter new entry (D)\n" \
+        "Enter multiple entries (X)")
         if user_input == "D":
+            print("Now adding an entry for today!")
             s.create_entry()
         elif user_input == "M":
             print("Please specify the start and end date for the activity map!")
@@ -149,7 +154,7 @@ if __name__ == "__main__":
             end = input("End date (yyyy-mm-dd): ")
             s.create_activity_map(start,end)
         elif user_input == "X":
-            print("Special entry mode")
+            print("Please specify the start and end date for the timespan you want to add entries in!")
             start = input("Start date (yyyy-mm-dd): ")
             end = input("End date (yyyy-mm-dd): ")
             date_range = pandas.date_range(start=start,end=end)
@@ -157,5 +162,4 @@ if __name__ == "__main__":
                 date = str(date)[:10]
                 s.create_entry(date)
         else:
-            print("Bye")
-            break
+            print("Not a known option!")
