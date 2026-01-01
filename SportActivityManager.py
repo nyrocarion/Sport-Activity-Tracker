@@ -8,6 +8,8 @@ import numpy as np
 import matplotlib
 from matplotlib.colors import ListedColormap
 
+import re
+
 class SportActivityManager(object):
     def __init__(self):
         '''
@@ -80,6 +82,10 @@ class SportActivityManager(object):
         data = list()
         row_data = [0,0,0,0,0,0,0]
 
+        # Collect running and hiking distances over the given timespan
+        running_distance_km = 0
+        hiking_distance_km = 0
+
         # Generating the data for the map as a list of row based lists
         for date in date_range:
             date = str(date)[:10]
@@ -91,6 +97,14 @@ class SportActivityManager(object):
                 val = self.text_to_value_mapping[self.activity_data[date]["activity_type"]] 
             except:
                 val = 0
+
+            if self.activity_data[date]["activity_type"] in ["hiking","running"]:
+                increase = float(re.findall(r"(\d+(?:,\d{,2})?\s*)(?=km)",self.activity_data[date]["activity_details"])[0].replace(",","."))
+                if self.activity_data[date]["activity_type"] == "hiking":
+                    hiking_distance_km += increase
+                if self.activity_data[date]["activity_type"] == "running":
+                    running_distance_km += increase
+
             weekday = datetime_object.isocalendar().weekday
             row_data[weekday-1] = val
             if weekday == 7 or date == end_date:
@@ -134,17 +148,28 @@ class SportActivityManager(object):
         patches = [matplotlib.patches.Patch(color=colors[i], label=legend_labels[i]) for i in range(len(colors))]
         ax.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc='upper left', title="Activity Type")
 
+        print(f"Total distances run in this timespan:\nRunning: {running_distance_km}\nHiking: {hiking_distance_km}")
+
         plt.show()
+
+        
 
 # Idea: A mode which allows a user to add all entries since the last entry
 # Idea: A mode that creates the activity map for the last full month
 
 if __name__ == "__main__":
     s = SportActivityManager()
+    print(r'''                                                                                                                                                                                                                                  
+▄█████ ▄▄▄▄   ▄▄▄  ▄▄▄▄  ▄▄▄▄▄▄    ▄████▄  ▄▄▄▄ ▄▄▄▄▄▄ ▄▄ ▄▄ ▄▄ ▄▄ ▄▄▄▄▄▄ ▄▄ ▄▄   ██████ ▄▄▄▄   ▄▄▄   ▄▄▄▄ ▄▄ ▄▄ ▄▄▄▄▄ ▄▄▄▄  
+▀▀▀▄▄▄ ██▄█▀ ██▀██ ██▄█▄   ██  ▄▄▄ ██▄▄██ ██▀▀▀   ██   ██ ██▄██ ██   ██   ▀███▀ ▄▄▄ ██   ██▄█▄ ██▀██ ██▀▀▀ ██▄█▀ ██▄▄  ██▄█▄ 
+█████▀ ██    ▀███▀ ██ ██   ██      ██  ██ ▀████   ██   ██  ▀█▀  ██   ██     █       ██   ██ ██ ██▀██ ▀████ ██ ██ ██▄▄▄ ██ ██                                                             
+        '''
+    )
     while True:
-        user_input = input("Generate activiy map (M)\n" \
+        user_input = input("Choose from the options below:\n" \
+        "Generate activiy map (M)\n" \
         "Enter new entry (D)\n" \
-        "Enter multiple entries (X)")
+        "Enter multiple entries (X)\n")
         if user_input == "D":
             print("Now adding an entry for today!")
             s.create_entry()
