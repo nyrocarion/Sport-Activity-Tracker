@@ -12,9 +12,6 @@ import re
 
 class SportActivityManager(object):
     def __init__(self):
-        '''
-        Loads the existing json file or creates an initial empty file
-        '''
         try:
             with open("sport_activity_data.json", "r") as file:
                 self.activity_data = json.load(file)
@@ -22,6 +19,34 @@ class SportActivityManager(object):
             with open("sport_activity_data.json", "w") as file:
                 file.close() 
                 self.activity_data = dict()
+        self.type_information = {
+            "restday" : {
+                "long" : "restday",
+                "value" : 1,
+                "text" : "\U0001F4A4",
+            },
+            "w": {
+                "long" : "workout", 
+                "value" : 2,
+                "text" : "\U0001F4AA",
+            },
+            "r": {
+                "long" : "running",
+                "value" : 3,
+                "text" : "\U0001F3C3",
+            },
+            "h": {
+                "long" : "hiking",
+                "value" : 4,
+                "text" : "\U0001F97E"
+            },
+            "b": {
+                "long" : "biking",
+                "value" : 5,
+                "text" : "\U0001F6B2"
+            }
+        }
+        
         self.text_to_value_mapping = {
             "restday" : 1,
             "workout" : 2,
@@ -36,28 +61,23 @@ class SportActivityManager(object):
         }
 
     def create_entry(self,default_date:str=""):
-        '''
-        Create a new entry over console input and save it into the json file.
-        Parameters:
-            - default_date: str (used when generating multiple entries)
-        '''
         if default_date == "":
             date = input("Enter date (yyyy-mm-dd, leave empty for todays date): ")
             if len(date) == 0:
-                date = default_date
+                date = datetime.datetime.now().date().strftime("%Y-%m-%d")
         else:
             date = default_date
             print(f"Date: {default_date}")
         type = input("Enter type (workout w, running r, hiking h or restday ENTER): ")
         if len(type) == 1:
-            type = {"w" : "workout", "r": "running", "h": "hiking"}[type]
+            type_long = self.type_information[type.lower()]["long"]
             details = input("Enter additional details (distance, workout name, etc.)")
         else:
-            type = "restday"
+            type_long = "restday"
             details = ""
         entry = {
             date: {
-                "activity_type" : type,
+                "activity_type" : type_long,
                 "activity_details" : details
             }
         }
@@ -66,9 +86,6 @@ class SportActivityManager(object):
             json.dump(self.activity_data,file,indent=4)
 
     def create_activity_map(self,start_date:str,end_date:str):
-        '''
-        Creates an activity map for all the activity from start to end date.
-        '''
         # Default dates (min or max date)
         if start_date == "":
             start_date = list(self.activity_data.items())[0][0]
@@ -143,7 +160,8 @@ class SportActivityManager(object):
             1: "Restday",
             2: "Workout",
             3: "Running",
-            4: "Hiking"
+            4: "Hiking",
+            5: "Biking"
         }
         patches = [matplotlib.patches.Patch(color=colors[i], label=legend_labels[i]) for i in range(len(colors))]
         ax.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc='upper left', title="Activity Type")
@@ -152,7 +170,6 @@ class SportActivityManager(object):
 
         plt.show()
 
-        
 
 # Idea: A mode which allows a user to add all entries since the last entry
 # Idea: A mode that creates the activity map for the last full month
