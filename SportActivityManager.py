@@ -34,11 +34,11 @@ class SportActivityManager(object):
             "biking" : 5,
         }
         self.num_to_display_mapping = {
-            "1" : "\U0001F4A4",
-            "2" : "\U0001F4AA",
-            "3" : "\U0001F3C3",
-            "4" : "\U0001F97E",
-            "5" : "\U0001F6B2"
+            "1" : "\U0001F4A4", # restday
+            "2" : "\U0001F4AA", # workout
+            "3" : "\U0001F3C3", # running
+            "4" : "\U0001F97E", # hiking
+            "5" : "\U0001F6B2", # biking
         }
 
     def create_entry(self,date):
@@ -55,7 +55,7 @@ class SportActivityManager(object):
         }[type.lower()]
 
         details = ""
-        if type_long is not "restday":
+        if type_long != "restday":
             details = input("Enter additional details (distance, workout name, etc.): ")
 
         entry = {
@@ -150,12 +150,12 @@ class SportActivityManager(object):
         patches = [matplotlib.patches.Patch(color=colors[i], label=legend_labels[i]) for i in range(len(colors))]
         ax.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc='upper left', title="Activity Type")
 
-        print(f"Total distances run in this timespan:\nRunning: {running_distance_km}\nHiking: {hiking_distance_km}")
+        print(f"Total distances run in this timespan:")
+        for activity in distance_km_dict:
+            print(f"- {activity}: {distance_km_dict[activity]} km")
 
         plt.show()
 
-
-# Idea: A mode which allows a user to add all entries since the last entry
 # Idea: A mode that creates the activity map for the last full month
 
 if __name__ == "__main__":
@@ -170,7 +170,8 @@ if __name__ == "__main__":
         user_input = input("Choose from the options below:\n" \
         "Generate activiy map (M)\n" \
         "Enter new entry (D)\n" \
-        "Enter multiple entries (X)\n")
+        "Enter multiple entries (X)\n" \
+        "Enter all entries since last entry (U)\n")
 
         if user_input == "D":
             print("Now adding an entry for today!")
@@ -182,6 +183,15 @@ if __name__ == "__main__":
             start = input("Start date (yyyy-mm-dd): ")
             end = input("End date (yyyy-mm-dd): ")
             s.create_activity_map(start,end)
+
+        elif user_input == "U":
+            latest_entry_date = list(s.activity_data.items())[-1][0]
+            today = datetime.datetime.now().date().strftime("%Y-%m-%d")
+            print(f"Now adding all entries since the last logged entry on {latest_entry_date}")
+            date_range = pandas.date_range(start=latest_entry_date,end=today)
+            for date in date_range:
+                date = str(date)[:10]
+                s.create_entry(date)
 
         elif user_input == "X":
             print("Please specify the start and end date for the timespan you want to add entries in!")
