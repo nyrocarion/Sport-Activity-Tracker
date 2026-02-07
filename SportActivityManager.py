@@ -156,8 +156,6 @@ class SportActivityManager(object):
 
         plt.show()
 
-# Idea: A mode that creates the activity map for the last full month
-
 if __name__ == "__main__":
     s = SportActivityManager()
     print(r'''                                                                                                                                                                                                                                  
@@ -169,6 +167,7 @@ if __name__ == "__main__":
     while True:
         user_input = input("Choose from the options below:\n" \
         "Generate activiy map (M)\n" \
+        "Generate activiy map for last month (N)\n" \
         "Enter new entry (D)\n" \
         "Enter multiple entries (X)\n" \
         "Enter all entries since last entry (U)\n")
@@ -182,6 +181,17 @@ if __name__ == "__main__":
             print("Please specify the start and end date for the activity map!")
             start = input("Start date (yyyy-mm-dd): ")
             end = input("End date (yyyy-mm-dd): ")
+            s.create_activity_map(start,end)
+
+        elif user_input == "N":
+            print("Now creating activity map for the last month!")
+            today = datetime.datetime.now()
+            first_day_of_current_month = today.replace(day=1)
+            last_day_of_prior_month =  first_day_of_current_month - datetime.timedelta(days=1)
+            first_day_of_prior_month = last_day_of_prior_month.replace(day=1)
+            start = first_day_of_prior_month.strftime("%Y-%m-%d")
+            end = last_day_of_prior_month.strftime("%Y-%m-%d")
+            print(start,end)
             s.create_activity_map(start,end)
 
         elif user_input == "U":
