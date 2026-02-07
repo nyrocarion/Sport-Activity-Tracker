@@ -1,6 +1,7 @@
 import datetime
 import json
 import pandas
+import re
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -8,7 +9,6 @@ import numpy as np
 import matplotlib
 from matplotlib.colors import ListedColormap
 
-import re
 
 class SportActivityManager(object):
     def __init__(self):
@@ -19,74 +19,58 @@ class SportActivityManager(object):
             with open("sport_activity_data.json", "w") as file:
                 file.close() 
                 self.activity_data = dict()
-        self.type_information = {
-            "restday" : {
-                "long" : "restday",
-                "value" : 1,
-                "text" : "\U0001F4A4",
-            },
-            "w": {
-                "long" : "workout", 
-                "value" : 2,
-                "text" : "\U0001F4AA",
-            },
-            "r": {
-                "long" : "running",
-                "value" : 3,
-                "text" : "\U0001F3C3",
-            },
-            "h": {
-                "long" : "hiking",
-                "value" : 4,
-                "text" : "\U0001F97E"
-            },
-            "b": {
-                "long" : "biking",
-                "value" : 5,
-                "text" : "\U0001F6B2"
-            }
-        }
+
+        self.distance_trackable_activities = [
+                "running",
+                "hiking",
+                "biking"
+            ]
         
-        self.text_to_value_mapping = {
+        self.type_to_value_map = {
             "restday" : 1,
             "workout" : 2,
             "running" : 3,
-            "hiking" : 4
+            "hiking" : 4,
+            "biking" : 5,
         }
         self.num_to_display_mapping = {
             "1" : "\U0001F4A4",
             "2" : "\U0001F4AA",
             "3" : "\U0001F3C3",
-            "4" : "\U0001F97E"
+            "4" : "\U0001F97E",
+            "5" : "\U0001F6B2"
         }
 
-    def create_entry(self,default_date:str=""):
-        if default_date == "":
+    def create_entry(self,date):
+        if date == "":
             date = input("Enter date (yyyy-mm-dd, leave empty for todays date): ")
-            if len(date) == 0:
-                date = datetime.datetime.now().date().strftime("%Y-%m-%d")
-        else:
-            date = default_date
-            print(f"Date: {default_date}")
+
         type = input("Enter type (workout w, running r, hiking h or restday ENTER): ")
-        if len(type) == 1:
-            type_long = self.type_information[type.lower()]["long"]
-            details = input("Enter additional details (distance, workout name, etc.)")
-        else:
-            type_long = "restday"
-            details = ""
+        type_long = {
+            ""  : "restday",
+            "w" : "workout",
+            "r" : "running",
+            "h" : "hiking",
+            "b" : "biking"
+        }[type.lower()]
+
+        details = ""
+        if type_long is not "restday":
+            details = input("Enter additional details (distance, workout name, etc.): ")
+
         entry = {
             date: {
                 "activity_type" : type_long,
                 "activity_details" : details
             }
         }
+
         self.activity_data.update(entry)
         with open("sport_activity_data.json", "w") as file:
             json.dump(self.activity_data,file,indent=4)
 
     def create_activity_map(self,start_date:str,end_date:str):
-        # Default dates (min or max date)
+        # Default dates (min and max date saved in the json file)
         if start_date == "":
             start_date = list(self.activity_data.items())[0][0]
         if end_date == "":
@@ -100,27 +84,27 @@ class SportActivityManager(object):
         row_data = [0,0,0,0,0,0,0]
 
         # Collect running and hiking distances over the given timespan
-        running_distance_km = 0
-        hiking_distance_km = 0
+        distance_km_dict = dict()
+        for activity in self.distance_trackable_activities:
+            distance_km_dict[activity] = 0
 
         # Generating the data for the map as a list of row based lists
         for date in date_range:
-            date = str(date)[:10]
+            date = str(date)[:10] # YYYY-MM-DD
             datetime_object = datetime.datetime.strptime(date, '%Y-%m-%d').date()
             calendar_week = datetime_object.isocalendar().week
             if calendar_week not in calendar_weeks:
                 calendar_weeks.append(calendar_week)
             try: 
-                val = self.text_to_value_mapping[self.activity_data[date]["activity_type"]] 
-            except:
-                val = 0
+                current_date_activity_type = self.activity_data[date]["activity_type"]
+                val = self.type_to_value_map[current_date_activity_type] 
 
-            if self.activity_data[date]["activity_type"] in ["hiking","running"]:
-                increase = float(re.findall(r"(\d+(?:,\d{,2})?\s*)(?=km)",self.activity_data[date]["activity_details"])[0].replace(",","."))
-                if self.activity_data[date]["activity_type"] == "hiking":
-                    hiking_distance_km += increase
-                if self.activity_data[date]["activity_type"] == "running":
-                    running_distance_km += increase
+                # Tracking total distances in the selected activity map timespan
+                if current_date_activity_type in self.distance_trackable_activities:
+                    increase = float(re.findall(r"(\d+(?:,\d{,2})?\s*)(?=km)",self.activity_data[date]["activity_details"])[0].replace(",","."))
+                    distance_km_dict[current_date_activity_type] += increase
+            except:
+                val = 0 # no data
 
             weekday = datetime_object.isocalendar().weekday
             row_data[weekday-1] = val
@@ -187,14 +171,18 @@ if __name__ == "__main__":
         "Generate activiy map (M)\n" \
         "Enter new entry (D)\n" \
         "Enter multiple entries (X)\n")
+
         if user_input == "D":
             print("Now adding an entry for today!")
-            s.create_entry()
+            today = datetime.datetime.now().date().strftime("%Y-%m-%d")
+            s.create_entry(today)
+
         elif user_input == "M":
             print("Please specify the start and end date for the activity map!")
             start = input("Start date (yyyy-mm-dd): ")
             end = input("End date (yyyy-mm-dd): ")
             s.create_activity_map(start,end)
+
         elif user_input == "X":
             print("Please specify the start and end date for the timespan you want to add entries in!")
             start = input("Start date (yyyy-mm-dd): ")
@@ -203,5 +191,6 @@ if __name__ == "__main__":
             for date in date_range:
                 date = str(date)[:10]
                 s.create_entry(date)
+
         else:
             print("Not a known option!")
